@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Pointage</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕰️</text></svg>">
+    <style>
+        body { font-family: sans-serif; margin: 15px; background: #f0f2f5; color: #333; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid #28a745; }
+        h3 { display: flex; align-items: center; gap: 10px; margin-top: 0; }
+        label { display: block; margin-top: 12px; font-weight: bold; font-size: 14px; color: #555; }
+        input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; background: #fff; }
+        button { width: 100%; padding: 15px; border-radius: 8px; border: none; margin-top: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-save { background: #28a745; color: white; font-size: 18px; }
+        .btn-save:active { background: #218838; transform: scale(0.98); }
+        .btn-csv { background: #007bff; color: white; margin-top: 25px; }
+        .btn-del { background: #ff4d4d; color: white; padding: 6px 10px; font-size: 12px; width: auto; margin: 0; border-radius: 5px; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+        th, td { border: 1px solid #eee; padding: 12px 8px; text-align: center; }
+        th { background: #f8f9fa; color: #666; font-size: 13px; }
+        .total { margin-top: 20px; font-weight: bold; text-align: right; font-size: 1.3em; background: #fff; padding: 10px; border-radius: 8px; }
+        .status-badge { padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-travail { background: #e8f5e9; color: #2e7d32; }
+        .badge-autre { background: #fff3e0; color: #ef6c00; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3>🕰️ Pointage Travail</h3>
+    
+    <label>Type de journée :</label>
+    <select id="typeJour" onchange="toggleChamps()">
+        <option value="Travail">💼 Travail</option>
+        <option value="Congés">🌴 Congés</option>
+        <option value="Férié">📅 Férié / Chômé</option>
+        <option value="Maladie">🤒 Maladie</option>
+    </select>
+
+    <label>Date :</label>
+    <input type="date" id="date">
+
+    <div id="sectionHeures">
+        <label>Début :</label>
+        <input type="time" id="debut">
+        <label>Fin :</label>
+        <input type="time" id="fin">
+        <label>Pause (minutes) :</label>
+        <input type="number" id="pause" value="0">
+    </div>
+    
+    <button class="btn-save" onclick="ajouter()">Enregistrer</button>
+</div>
+
+<table id="table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Type / Durée</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<div class="total" id="total">Total Heures : 0h</div>
+
+<button class="btn-csv" onclick="exporter()">Exporter le mois (.csv)</button>
+<button onclick="if(confirm('Supprimer tout l\'historique ?')) {localStorage.clear(); charger();}" style="background:none; color: #999; text-decoration: underline; font-size: 11px; margin-top: 40px; border:none;">Réinitialiser l'application</button>
+
+<script>
+    document.getElementById('date').valueAsDate = new Date();
+
+    function toggleChamps() {
+        const type = document.getElementById('typeJour').value;
+        const section = document.getElementById('sectionHeures');
+        section.style.display = (type === "Travail") ? "block" : "none";
+    }
+
+    function ajouter() {
+        const type = document.getElementById('typeJour').value;
+        const d = document.getElementById('date').value;
+        let dureeAffichage = "";
+        let dureeNombre = 0;
+
+        if (type === "Travail") {
+            const start = document.getElementById('debut').value;
+            const end = document.getElementById('fin').value;
+            const pause = parseInt(document.getElementById('pause').value) || 0;
+
+            if(!start || !end) return alert("Indiquez les heures");
+            
+            const h1 = new Date("2000-01-01T"+start);
+            const h2 = new Date("2000-01-01T"+end);
+            let diff = (h2 - h1) / 3600000;
+            if(diff < 0) diff += 24; 
+            dureeNombre = Math.max(0, diff - (pause / 60));
+            dureeAffichage = dureeNombre.toFixed(2) + " h";
+        } else {
+            dureeAffichage = type.toUpperCase();
+            dureeNombre = 0;
+        }
+
+        const data = JSON.parse(localStorage.getItem('heures') || "[]");
+        data.push({date: d, label: dureeAffichage, valeur: dureeNombre, type: type});
+        localStorage.setItem('heures', JSON.stringify(data));
+        charger();
+        
+        // Reset
+        document.getElementById('debut').value = "";
+        document.getElementById('fin').value = "";
+        document.getElementById('typeJour').value = "Travail";
+        toggleChamps();
+    }
+
+    function charger() {
+        const data = JSON.parse(localStorage.getItem('heures') || "[]");
+        const body = document.querySelector("#table tbody");
+        body.innerHTML = "";
+        let total = 0;
+        data.forEach((i, index) => {
+            total += parseFloat(i.valeur || 0);
+            const badgeClass = i.type === "Travail" ? "badge-travail" : "badge-autre";
+            body.innerHTML += `<tr>
+                <td>${i.date}</td>
+                <td><span class="status-badge ${badgeClass}">${i.label}</span></td>
+                <td><button class="btn-del" onclick="supprimer(${index})">X</button></td>
+            </tr>`;
+        });
+        document.getElementById('total').innerText = "Total Heures : " + total.toFixed(2) + "h";
+    }
+
+    function supprimer(index) {
+        const data = JSON.parse(localStorage.getItem('heures') || "[]");
+        data.splice(index, 1);
+        localStorage.setItem('heures', JSON.stringify(data));
+        charger();
+    }
+
+    function exporter() {
+        const data = JSON.parse(localStorage.getItem('heures') || "[]");
+        if(data.length === 0) return alert("Rien à exporter");
+        let csv = "\ufeffDate,Type_Duree,Heures_Calcul\n" + data.map(i => i.date + "," + i.label + "," + i.valeur).join("\n");
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pointage_mensuel.csv';
+        a.click();
+    }
+    window.onload = charger;
+</script>
+
+</body>
+</html>
