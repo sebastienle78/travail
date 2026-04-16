@@ -3,153 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Pointage</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕰️</text></svg>">
+    <title>Mon Pointage Pro</title>
     <style>
-        body { font-family: sans-serif; margin: 15px; background: #f0f2f5; color: #333; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid #28a745; }
-        h3 { display: flex; align-items: center; gap: 10px; margin-top: 0; }
-        label { display: block; margin-top: 12px; font-weight: bold; font-size: 14px; color: #555; }
-        input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; background: #fff; }
-        button { width: 100%; padding: 15px; border-radius: 8px; border: none; margin-top: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-save { background: #28a745; color: white; font-size: 18px; }
-        .btn-save:active { background: #218838; transform: scale(0.98); }
-        .btn-csv { background: #007bff; color: white; margin-top: 25px; }
-        .btn-del { background: #ff4d4d; color: white; padding: 6px 10px; font-size: 12px; width: auto; margin: 0; border-radius: 5px; }
-        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
-        th, td { border: 1px solid #eee; padding: 12px 8px; text-align: center; }
-        th { background: #f8f9fa; color: #666; font-size: 13px; }
-        .total { margin-top: 20px; font-weight: bold; text-align: right; font-size: 1.3em; background: #fff; padding: 10px; border-radius: 8px; }
-        .status-badge { padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-        .badge-travail { background: #e8f5e9; color: #2e7d32; }
-        .badge-autre { background: #fff3e0; color: #ef6c00; }
+        body { font-family: sans-serif; margin: 20px; background: #f4f4f9; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        button { flex: 1; min-width: 100px; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-save { background: #28a745; color: white; }
+        .btn-ferie { background: #007bff; color: white; }
+        .btn-chome { background: #6c757d; color: white; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background: #eee; }
+        .total { margin-top: 20px; font-size: 18px; font-weight: bold; text-align: center; color: #d9534f; }
+        .btn-del { background: #dc3545; color: white; padding: 5px; border-radius: 3px; font-size: 12px; }
+        .row-ferie { background-color: #e7f3ff; color: #004085; }
+        .row-chome { background-color: #f8f9fa; font-style: italic; color: #666; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h3>🕰️ Pointage Travail</h3>
+<div class="container">
+    <h2>Mon Pointage</h2>
     
-    <label>Type de journée :</label>
-    <select id="typeJour" onchange="toggleChamps()">
-        <option value="Travail">💼 Travail</option>
-        <option value="Congés">🌴 Congés</option>
-        <option value="Férié">📅 Férié / Chômé</option>
-        <option value="Maladie">🤒 Maladie</option>
-    </select>
-
     <label>Date :</label>
     <input type="date" id="date">
-
-    <div id="sectionHeures">
-        <label>Début :</label>
-        <input type="time" id="debut">
-        <label>Fin :</label>
-        <input type="time" id="fin">
-        <label>Pause (minutes) :</label>
-        <input type="number" id="pause" value="0">
-    </div>
     
-    <button class="btn-save" onclick="ajouter()">Enregistrer</button>
+    <label>Heures (Début - Fin - Pause) :</label>
+    <div style="display: flex; gap: 5px;">
+        <input type="time" id="start" value="08:00">
+        <input type="time" id="end" value="17:00">
+        <input type="number" id="pause" placeholder="Pause (min)" value="45">
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-save" onclick="addEntry('Travail')">Enregistrer</button>
+        <button class="btn-ferie" onclick="addEntry('Férié')">Férié</button>
+        <button class="btn-chome" onclick="addEntry('Chômé')">Chômé</button>
+    </div>
+
+    <div class="total">Total : <span id="totalHours">0.00</span>h</div>
+
+    <table id="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Heures</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+    </table>
 </div>
 
-<table id="table">
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Type / Durée</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody></tbody>
-</table>
-
-<div class="total" id="total">Total Heures : 0h</div>
-
-<button class="btn-csv" onclick="exporter()">Exporter le mois (.csv)</button>
-<button onclick="if(confirm('Supprimer tout l\'historique ?')) {localStorage.clear(); charger();}" style="background:none; color: #999; text-decoration: underline; font-size: 11px; margin-top: 40px; border:none;">Réinitialiser l'application</button>
-
 <script>
-    document.getElementById('date').valueAsDate = new Date();
+    let entries = JSON.parse(localStorage.getItem('pointage_data')) || [];
 
-    function toggleChamps() {
-        const type = document.getElementById('typeJour').value;
-        const section = document.getElementById('sectionHeures');
-        section.style.display = (type === "Travail") ? "block" : "none";
-    }
+    function addEntry(type) {
+        const date = document.getElementById('date').value;
+        if(!date) { alert("Choisis une date !"); return; }
 
-    function ajouter() {
-        const type = document.getElementById('typeJour').value;
-        const d = document.getElementById('date').value;
-        let dureeAffichage = "";
-        let dureeNombre = 0;
-
-        if (type === "Travail") {
-            const start = document.getElementById('debut').value;
-            const end = document.getElementById('fin').value;
-            const pause = parseInt(document.getElementById('pause').value) || 0;
-
-            if(!start || !end) return alert("Indiquez les heures");
+        let hours = 0;
+        if(type === 'Travail') {
+            const start = document.getElementById('start').value;
+            const end = document.getElementById('end').value;
+            const pause = document.getElementById('pause').value || 0;
             
-            const h1 = new Date("2000-01-01T"+start);
-            const h2 = new Date("2000-01-01T"+end);
-            let diff = (h2 - h1) / 3600000;
-            if(diff < 0) diff += 24; 
-            dureeNombre = Math.max(0, diff - (pause / 60));
-            dureeAffichage = dureeNombre.toFixed(2) + " h";
-        } else {
-            dureeAffichage = type.toUpperCase();
-            dureeNombre = 0;
+            const startTime = new Date(`2000-01-01T${start}`);
+            const endTime = new Date(`2000-01-01T${end}`);
+            let diff = (endTime - startTime) / 1000 / 60; // minutes
+            diff -= pause;
+            hours = diff > 0 ? (diff / 60).toFixed(2) : 0;
         }
 
-        const data = JSON.parse(localStorage.getItem('heures') || "[]");
-        data.push({date: d, label: dureeAffichage, valeur: dureeNombre, type: type});
-        localStorage.setItem('heures', JSON.stringify(data));
-        charger();
-        
-        // Reset
-        document.getElementById('debut').value = "";
-        document.getElementById('fin').value = "";
-        document.getElementById('typeJour').value = "Travail";
-        toggleChamps();
+        entries.push({ date, type, hours: parseFloat(hours) });
+        save();
     }
 
-    function charger() {
-        const data = JSON.parse(localStorage.getItem('heures') || "[]");
-        const body = document.querySelector("#table tbody");
-        body.innerHTML = "";
+    function deleteEntry(index) {
+        entries.splice(index, 1);
+        save();
+    }
+
+    function save() {
+        entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+        localStorage.setItem('pointage_data', JSON.stringify(entries));
+        render();
+    }
+
+    function render() {
+        const body = document.getElementById('logBody');
+        body.innerHTML = '';
         let total = 0;
-        data.forEach((i, index) => {
-            total += parseFloat(i.valeur || 0);
-            const badgeClass = i.type === "Travail" ? "badge-travail" : "badge-autre";
-            body.innerHTML += `<tr>
-                <td>${i.date}</td>
-                <td><span class="status-badge ${badgeClass}">${i.label}</span></td>
-                <td><button class="btn-del" onclick="supprimer(${index})">X</button></td>
-            </tr>`;
+        entries.forEach((e, index) => {
+            total += e.hours;
+            const rowClass = e.type === 'Férié' ? 'row-ferie' : (e.type === 'Chômé' ? 'row-chome' : '');
+            body.innerHTML += `
+                <tr class="${rowClass}">
+                    <td>${new Date(e.date).toLocaleDateString('fr-FR')}</td>
+                    <td>${e.type}</td>
+                    <td>${e.hours > 0 ? e.hours + 'h' : '-'}</td>
+                    <td><button class="btn-del" onclick="deleteEntry(${index})">🗑️</button></td>
+                </tr>`;
         });
-        document.getElementById('total').innerText = "Total Heures : " + total.toFixed(2) + "h";
+        document.getElementById('totalHours').innerText = total.toFixed(2);
     }
 
-    function supprimer(index) {
-        const data = JSON.parse(localStorage.getItem('heures') || "[]");
-        data.splice(index, 1);
-        localStorage.setItem('heures', JSON.stringify(data));
-        charger();
-    }
-
-    function exporter() {
-        const data = JSON.parse(localStorage.getItem('heures') || "[]");
-        if(data.length === 0) return alert("Rien à exporter");
-        let csv = "\ufeffDate,Type_Duree,Heures_Calcul\n" + data.map(i => i.date + "," + i.label + "," + i.valeur).join("\n");
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'pointage_mensuel.csv';
-        a.click();
-    }
-    window.onload = charger;
+    document.getElementById('date').valueAsDate = new Date();
+    render();
 </script>
 
 </body>
