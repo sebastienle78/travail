@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -61,7 +61,7 @@
         </div>
     </div>
 
-    <div class="total">Total : <span id="totalHours">0.00</span>h</div>
+    <div class="total">Total : <span id="totalHours">0h 00min</span></div>
 
     <table id="table">
         <thead>
@@ -87,6 +87,14 @@
         document.getElementById('displayMonth').innerText = monthName;
     }
 
+    // Convertit les centièmes (ex: 8.5) en format HHh MMmin
+    function formatHours(decimalHours) {
+        if (!decimalHours || decimalHours === 0) return "-";
+        const h = Math.floor(decimalHours);
+        const m = Math.round((decimalHours - h) * 60);
+        return `${h}h ${m < 10 ? '0' + m : m}min`;
+    }
+
     function addEntry(type) {
         const date = document.getElementById('date').value;
         if(!date) return;
@@ -98,7 +106,7 @@
             const startTime = new Date(`2000-01-01T${start}`);
             const endTime = new Date(`2000-01-01T${end}`);
             let diff = (endTime - startTime) / 1000 / 60 - pause;
-            hours = diff > 0 ? (diff / 60).toFixed(2) : 0;
+            hours = diff > 0 ? (diff / 60) : 0;
         }
         entries.push({ date, type, hours: parseFloat(hours) });
         save();
@@ -113,18 +121,23 @@
     function render() {
         const body = document.getElementById('logBody');
         body.innerHTML = '';
-        let total = 0;
+        let totalDecimal = 0;
         entries.forEach((e, index) => {
-            total += e.hours;
+            totalDecimal += e.hours;
             let rowClass = e.type === 'Férié' ? 'row-ferie' : (e.type === 'Chômé' ? 'row-chome' : (e.type === 'Congés' ? 'row-conge' : ''));
+            
             body.innerHTML += `<tr class="${rowClass}">
                 <td>${new Date(e.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})}</td>
                 <td>${e.type}</td>
-                <td>${e.hours > 0 ? e.hours : '-'}</td>
+                <td>${formatHours(e.hours)}</td>
                 <td class="no-print"><button class="btn-del" onclick="entries.splice(${index},1);save();">🗑️</button></td>
             </tr>`;
         });
-        document.getElementById('totalHours').innerText = total.toFixed(2);
+        
+        // Calcul du total final en Heures et Minutes
+        const totalH = Math.floor(totalDecimal);
+        const totalM = Math.round((totalDecimal - totalH) * 60);
+        document.getElementById('totalHours').innerText = `${totalH}h ${totalM < 10 ? '0' + totalM : totalM}min`;
     }
 
     document.getElementById('date').valueAsDate = new Date();
