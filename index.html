@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -8,21 +7,23 @@
     <style>
         body { font-family: sans-serif; margin: 20px; background: #f4f4f9; }
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #333; }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
         label { display: block; margin-top: 10px; font-weight: bold; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
-        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-        button { width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; }
-        .btn-save { background: #28a745; color: white; }
-        .btn-ferie { background: #007bff; color: white; }
-        .btn-chome { background: #6c757d; color: white; }
-        table { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: 14px; }
+        input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-save { background: #28a745; } /* Vert */
+        .btn-ferie { background: #007bff; } /* Bleu */
+        .btn-chome { background: #6c757d; } /* Gris */
+        .btn-conge { background: #fd7e14; } /* Orange */
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: 13px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background: #eee; }
-        .total { margin-top: 20px; font-size: 20px; font-weight: bold; text-align: center; color: #d9534f; border: 2px solid #d9534f; padding: 10px; border-radius: 5px; }
-        .btn-del { background: #dc3545; color: white; padding: 8px; border-radius: 5px; border: none; }
-        .row-ferie { background-color: #e7f3ff; color: #004085; }
-        .row-chome { background-color: #f8f9fa; font-style: italic; color: #666; }
+        .total { margin-top: 20px; font-size: 18px; font-weight: bold; text-align: center; color: #d9534f; border: 2px solid #d9534f; padding: 10px; border-radius: 5px; }
+        .btn-del { background: #dc3545; padding: 6px 10px; border-radius: 5px; border: none; color: white; }
+        .row-ferie { background-color: #e7f3ff; }
+        .row-chome { background-color: #f8f9fa; font-style: italic; }
+        .row-conge { background-color: #fff3e6; }
     </style>
 </head>
 <body>
@@ -44,6 +45,7 @@
         <button class="btn-save" onclick="addEntry('Travail')">✅ ENREGISTRER TRAVAIL</button>
         <button class="btn-ferie" onclick="addEntry('Férié')">📅 JOUR FÉRIÉ</button>
         <button class="btn-chome" onclick="addEntry('Chômé')">🚫 JOUR CHÔMÉ</button>
+        <button class="btn-conge" onclick="addEntry('Congés')">🏖️ CONGÉS</button>
     </div>
 
     <div class="total">Total : <span id="totalHours">0.00</span>h</div>
@@ -104,10 +106,14 @@
         let total = 0;
         entries.forEach((e, index) => {
             total += e.hours;
-            const rowClass = e.type === 'Férié' ? 'row-ferie' : (e.type === 'Chômé' ? 'row-chome' : '');
+            let rowClass = '';
+            if(e.type === 'Férié') rowClass = 'row-ferie';
+            if(e.type === 'Chômé') rowClass = 'row-chome';
+            if(e.type === 'Congés') rowClass = 'row-conge';
+
             body.innerHTML += `
                 <tr class="${rowClass}">
-                    <td>${new Date(e.date).toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'})}</td>
+                    <td>${new Date(e.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})}</td>
                     <td>${e.type}</td>
                     <td>${e.hours > 0 ? e.hours : '-'}</td>
                     <td><button class="btn-del" onclick="deleteEntry(${index})">🗑️</button></td>
