@@ -8,6 +8,8 @@
         body { font-family: sans-serif; margin: 20px; background: #f4f4f9; }
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #333; margin-bottom: 20px; }
+        .user-info { text-align: center; font-weight: bold; font-size: 18px; color: #555; margin-bottom: 5px; }
+        .current-month { text-align: center; font-size: 24px; font-weight: bold; color: #007bff; text-transform: capitalize; margin-bottom: 20px; }
         label { display: block; margin-top: 10px; font-weight: bold; }
         input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
         .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
@@ -16,51 +18,41 @@
         .btn-ferie { background: #007bff; }
         .btn-chome { background: #6c757d; }
         .btn-conge { background: #fd7e14; }
-        .btn-print { background: #333; margin-top: 15px; } /* Bouton noir pour imprimer */
-        
+        .btn-print { background: #333; margin-top: 15px; }
         table { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: 13px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background: #eee; }
         .total { margin-top: 20px; font-size: 18px; font-weight: bold; text-align: center; color: #d9534f; border: 2px solid #d9534f; padding: 10px; border-radius: 5px; }
         .btn-del { background: #dc3545; padding: 6px 10px; border-radius: 5px; border: none; color: white; }
-        
         .row-ferie { background-color: #e7f3ff; }
         .row-chome { background-color: #f8f9fa; font-style: italic; }
         .row-conge { background-color: #fff3e6; }
 
-        /* Style spécial pour l'impression */
         @media print {
             .btn-group, .btn-del, .btn-print, label, input, h2, .no-print { display: none !important; }
             body { background: white; margin: 0; }
             .container { box-shadow: none; border: none; width: 100%; max-width: none; }
-            .total { color: black; border-color: black; }
-            table { font-size: 16px; }
-            .print-header { display: block !important; text-align: center; margin-bottom: 20px; }
+            .current-month { color: #007bff !important; font-size: 30px; margin-top: 10px; }
+            .user-info { display: block !important; font-size: 20px; color: black; }
         }
-        .print-header { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="print-header">
-        <h1>Récapitulatif de Pointage</h1>
-        <p>Document généré le : <span id="printDate"></span></p>
-    </div>
+    <div class="user-info">LEYRIT Sébastien</div>
+    <div id="displayMonth" class="current-month"></div>
 
-    <h2>Mon Pointage</h2>
-    
     <div class="no-print">
+        <h2>Mon Pointage</h2>
         <label>Date :</label>
         <input type="date" id="date">
-        
         <label>Heures (Début - Fin - Pause) :</label>
         <div style="display: flex; gap: 5px;">
             <input type="time" id="start" value="08:00">
             <input type="time" id="end" value="17:00">
-            <input type="number" id="pause" placeholder="Pause (min)" value="45">
+            <input type="number" id="pause" placeholder="min" value="45">
         </div>
-
         <div class="btn-group">
             <button class="btn-save" onclick="addEntry('Travail')">✅ ENREGISTRER TRAVAIL</button>
             <button class="btn-ferie" onclick="addEntry('Férié')">📅 JOUR FÉRIÉ</button>
@@ -83,15 +75,21 @@
         <tbody id="logBody"></tbody>
     </table>
 
-    <button class="btn-print no-print" onclick="preparePrint()">🖨️ IMPRIMER / PARTAGER PDF</button>
+    <button class="btn-print no-print" onclick="window.print()">🖨️ IMPRIMER / PDF</button>
 </div>
 
 <script>
     let entries = JSON.parse(localStorage.getItem('pointage_data')) || [];
 
+    function updateMonthDisplay() {
+        const now = new Date();
+        const monthName = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        document.getElementById('displayMonth').innerText = monthName;
+    }
+
     function addEntry(type) {
         const date = document.getElementById('date').value;
-        if(!date) { alert("Choisis une date !"); return; }
+        if(!date) return;
         let hours = 0;
         if(type === 'Travail') {
             const start = document.getElementById('start').value;
@@ -99,19 +97,11 @@
             const pause = document.getElementById('pause').value || 0;
             const startTime = new Date(`2000-01-01T${start}`);
             const endTime = new Date(`2000-01-01T${end}`);
-            let diff = (endTime - startTime) / 1000 / 60; 
-            diff -= pause;
+            let diff = (endTime - startTime) / 1000 / 60 - pause;
             hours = diff > 0 ? (diff / 60).toFixed(2) : 0;
         }
         entries.push({ date, type, hours: parseFloat(hours) });
         save();
-    }
-
-    function deleteEntry(index) {
-        if(confirm("Supprimer cette ligne ?")) {
-            entries.splice(index, 1);
-            save();
-        }
     }
 
     function save() {
@@ -126,28 +116,19 @@
         let total = 0;
         entries.forEach((e, index) => {
             total += e.hours;
-            let rowClass = '';
-            if(e.type === 'Férié') rowClass = 'row-ferie';
-            if(e.type === 'Chômé') rowClass = 'row-chome';
-            if(e.type === 'Congés') rowClass = 'row-conge';
-
-            body.innerHTML += `
-                <tr class="${rowClass}">
-                    <td>${new Date(e.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})}</td>
-                    <td>${e.type}</td>
-                    <td>${e.hours > 0 ? e.hours : '-'}</td>
-                    <td class="no-print"><button class="btn-del" onclick="deleteEntry(${index})">🗑️</button></td>
-                </tr>`;
+            let rowClass = e.type === 'Férié' ? 'row-ferie' : (e.type === 'Chômé' ? 'row-chome' : (e.type === 'Congés' ? 'row-conge' : ''));
+            body.innerHTML += `<tr class="${rowClass}">
+                <td>${new Date(e.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})}</td>
+                <td>${e.type}</td>
+                <td>${e.hours > 0 ? e.hours : '-'}</td>
+                <td class="no-print"><button class="btn-del" onclick="entries.splice(${index},1);save();">🗑️</button></td>
+            </tr>`;
         });
         document.getElementById('totalHours').innerText = total.toFixed(2);
     }
 
-    function preparePrint() {
-        document.getElementById('printDate').innerText = new Date().toLocaleDateString('fr-FR');
-        window.print();
-    }
-
     document.getElementById('date').valueAsDate = new Date();
+    updateMonthDisplay();
     render();
 </script>
 
