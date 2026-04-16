@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -9,17 +10,17 @@
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #333; }
         label { display: block; margin-top: 10px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-        button { flex: 1; min-width: 100px; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        button { width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; }
         .btn-save { background: #28a745; color: white; }
         .btn-ferie { background: #007bff; color: white; }
         .btn-chome { background: #6c757d; color: white; }
         table { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: 14px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background: #eee; }
-        .total { margin-top: 20px; font-size: 18px; font-weight: bold; text-align: center; color: #d9534f; }
-        .btn-del { background: #dc3545; color: white; padding: 5px; border-radius: 3px; font-size: 12px; }
+        .total { margin-top: 20px; font-size: 20px; font-weight: bold; text-align: center; color: #d9534f; border: 2px solid #d9534f; padding: 10px; border-radius: 5px; }
+        .btn-del { background: #dc3545; color: white; padding: 8px; border-radius: 5px; border: none; }
         .row-ferie { background-color: #e7f3ff; color: #004085; }
         .row-chome { background-color: #f8f9fa; font-style: italic; color: #666; }
     </style>
@@ -40,9 +41,9 @@
     </div>
 
     <div class="btn-group">
-        <button class="btn-save" onclick="addEntry('Travail')">Enregistrer</button>
-        <button class="btn-ferie" onclick="addEntry('Férié')">Férié</button>
-        <button class="btn-chome" onclick="addEntry('Chômé')">Chômé</button>
+        <button class="btn-save" onclick="addEntry('Travail')">✅ ENREGISTRER TRAVAIL</button>
+        <button class="btn-ferie" onclick="addEntry('Férié')">📅 JOUR FÉRIÉ</button>
+        <button class="btn-chome" onclick="addEntry('Chômé')">🚫 JOUR CHÔMÉ</button>
     </div>
 
     <div class="total">Total : <span id="totalHours">0.00</span>h</div>
@@ -52,8 +53,8 @@
             <tr>
                 <th>Date</th>
                 <th>Type</th>
-                <th>Heures</th>
-                <th>Action</th>
+                <th>Hrs</th>
+                <th></th>
             </tr>
         </thead>
         <tbody id="logBody"></tbody>
@@ -75,7 +76,7 @@
             
             const startTime = new Date(`2000-01-01T${start}`);
             const endTime = new Date(`2000-01-01T${end}`);
-            let diff = (endTime - startTime) / 1000 / 60; // minutes
+            let diff = (endTime - startTime) / 1000 / 60; 
             diff -= pause;
             hours = diff > 0 ? (diff / 60).toFixed(2) : 0;
         }
@@ -85,8 +86,10 @@
     }
 
     function deleteEntry(index) {
-        entries.splice(index, 1);
-        save();
+        if(confirm("Supprimer cette ligne ?")) {
+            entries.splice(index, 1);
+            save();
+        }
     }
 
     function save() {
@@ -104,9 +107,9 @@
             const rowClass = e.type === 'Férié' ? 'row-ferie' : (e.type === 'Chômé' ? 'row-chome' : '');
             body.innerHTML += `
                 <tr class="${rowClass}">
-                    <td>${new Date(e.date).toLocaleDateString('fr-FR')}</td>
+                    <td>${new Date(e.date).toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'})}</td>
                     <td>${e.type}</td>
-                    <td>${e.hours > 0 ? e.hours + 'h' : '-'}</td>
+                    <td>${e.hours > 0 ? e.hours : '-'}</td>
                     <td><button class="btn-del" onclick="deleteEntry(${index})">🗑️</button></td>
                 </tr>`;
         });
